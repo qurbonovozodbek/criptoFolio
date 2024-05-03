@@ -13,7 +13,7 @@ function CryptoChart() {
         type: "datetime",
       },
     },
-    series: [], // Initialize series with an empty array
+    series: [],
   });
   console.log(item);
 
@@ -23,13 +23,12 @@ function CryptoChart() {
     const fetchData = async () => {
       try {
         const [data24h, data7d, data30d, data1y] = await Promise.all([
-          fetchHistoricalData(item, selectedCurrency, 1), // 24 hours
-          fetchHistoricalData(item, selectedCurrency, 7), // 1 week
-          fetchHistoricalData(item, selectedCurrency, 30), // 1 month
-          fetchHistoricalData(item, selectedCurrency, 365), // 1 year
+          fetchHistoricalData(item, selectedCurrency, 1),
+          fetchHistoricalData(item, selectedCurrency, 7), 
+          fetchHistoricalData(item, selectedCurrency, 30), 
+          fetchHistoricalData(item, selectedCurrency, 365),
         ]);
 
-        // Format data for ApexCharts
         const formattedData = {
           options: {
             chart: {
@@ -62,7 +61,7 @@ function CryptoChart() {
       const apiUrl = `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=${vsCurrency}&days=${days}`;
       const response = await fetch(apiUrl);
       const data = await response.json();
-      return data.prices; // Extract prices array from response
+      return data.prices; 
     } catch (error) {
       console.error("Error fetching historical data:", error);
       return [];

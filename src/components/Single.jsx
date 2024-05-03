@@ -4,12 +4,11 @@ import { SkewLoader } from "react-spinners";
 
 function Single() {
   const [name, setName] = useState(JSON.parse(localStorage.getItem("single")));
-  const [product, setProduct] = useState(null); // Initialize product as null
+  const [product, setProduct] = useState(null); 
   const [firstParagraph, setFirstParagraph] = useState("");
-  const [loading, setLoading] = useState(true); // Initial loading state
-  const [error, setError] = useState(""); // Initialize error state as empty string
+  const [loading, setLoading] = useState(true); 
+  const [error, setError] = useState("");
 
-  // Function to fetch item data from API
   const getItem = (itemName) => {
     const apiUrl = `https://api.coingecko.com/api/v3/coins/${itemName}`;
     fetch(apiUrl)
@@ -20,25 +19,25 @@ function Single() {
         return res.json();
       })
       .then((data) => {
-        setProduct(data); // Set product state with fetched data
+        setProduct(data);
         if (data.description && data.description.en) {
-          const firstParagraph = data.description.en.split(".")[0]; // Get the first sentence
+          const firstParagraph = data.description.en.split(".")[0];
           setFirstParagraph(firstParagraph);
         }
-        setLoading(false); // Update loading state when data is fetched
+        setLoading(false); 
       })
       .catch((err) => {
-        setError(err.message); // Set error message
-        setLoading(false); // Update loading state in case of error
+        setError(err.message);
+        setLoading(false); 
       });
   };
 
   useEffect(() => {
     if (name) {
-      setLoading(true); // Set loading state to true when fetching new item
-      getItem(name); // Fetch item data when 'name' state changes
+      setLoading(true); 
+      getItem(name); 
     }
-  }, [name]); // Run useEffect whenever 'name' changes
+  }, [name]);
 
   return (
     <div className="single">
@@ -49,7 +48,7 @@ function Single() {
       ) : (
         <div className="single-details">
           <div className="single-left">
-            {product && ( // Render product details only when product data is available
+            {product && (
               <div key={product.id} className="single-card">
                 <img src={product.image.large} alt={product.name} />
                 <h1>{product.id}</h1>

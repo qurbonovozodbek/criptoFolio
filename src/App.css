@@ -335,6 +335,7 @@ header button:hover {
   text-align: right;
 }
 table {
+  position: relative;
   width: 100%;
   border: none;
 }
@@ -507,6 +508,23 @@ td {
   font-weight: 500;
   color: red;
   padding-top: 200px;
+}
+.error-home {
+  font-family: "Montserrat", sans-serif;
+  position: absolute;
+  font-size: 18px;
+  font-weight: 500;
+  color: red;
+  padding-top: 20px;
+  left: 43%;
+}
+.all-card {
+  width: 100%;
+}
+.loader-home {
+  position: absolute;
+  left: 47%;
+  margin-top: 20px;
 }
 .single-details {
   width: 100%;

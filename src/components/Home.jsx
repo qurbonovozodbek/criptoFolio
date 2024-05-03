@@ -3,6 +3,7 @@ import Pagination from "@mui/material/Pagination";
 import Stack from "@mui/material/Stack";
 import { IoEye } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
+import { SkewLoader } from "react-spinners";
 function Home() {
   const navigate = useNavigate();
   const [cars, setCars] = useState([]);
@@ -12,6 +13,16 @@ function Home() {
   const [isWatched, setIsWatched] = useState(false);
   const [trend, setTrend] = useState([]);
   const [secondTrend, setSecondTrend] = useState([]);
+  const [green, setGreen] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (localStorage.getItem("items")) {
+      setGreen(JSON.parse(localStorage.getItem("items")));
+    }
+  }, []);
 
   const handleSelect = (e) => {
     setRole(e.target.value);
@@ -63,29 +74,29 @@ function Home() {
       `);
       const data = await response.json();
       setCars(data);
+      setLoading(false);
     } catch (err) {
+      setError(err.message);
       console.log(err);
+      setLoading(false);
     }
   }
 
   useEffect(() => {
-    getData(role, currentPage, 10)
-  }, [role, currentPage])
-
-
-
+    getData(role, currentPage, 10);
+    setLoading(true);
+  }, [role, currentPage]);
 
   const handleChange = (event, value) => {
     setCurrentPage(value);
     console.log(value);
   };
-  
 
   useEffect(() => {
     getSecondTrend(role, 4);
     getTrend(role, 4);
+    setLoading(true);
   }, []);
-  
 
   let symbol = "";
   if (role === "USD") {
@@ -96,7 +107,8 @@ function Home() {
     symbol = "₹";
   }
 
-  const renderEyeIcon = (isWatched) => {
+  const renderEyeIcon = (isWatched, id) => {
+    isWatched = green.some((el) => el.id == id);
     return (
       <IoEye
         style={{ color: isWatched ? "green" : "white" }}
@@ -105,49 +117,27 @@ function Home() {
     );
   };
 
-  // function handleSingle(e) {
-  //   navigate("/single");
-  //   localStorage.setItem("single", JSON.stringify(e));
-  //   const storedItems = localStorage.getItem("items");
-  //   let items = storedItems ? JSON.parse(storedItems) : [];
-
-  //   let shouldAddItem = true;
-  //   for (let i = 0; i < items.length; i++) {
-  //     if (items[i] === e) {
-  //       shouldAddItem = false;
-  //       break;
-  //     }
-  //   }
-
-  //   if (shouldAddItem) {
-  //     items.push(e);
-  //     localStorage.setItem("items", JSON.stringify(items));
-  //   } else {
-  //     console.log(`Item with ID ${e} already exists in localStorage.`);
-  //   }
-  // }
-
   const handleSingle = (Product) => {
     navigate("/single");
     const storedItems = localStorage.getItem("items");
     let items = storedItems ? JSON.parse(storedItems) : [];
-  
+
     const productExists = items.some((item) => item.id === Product.id);
-  
+
     if (!productExists) {
       items = [...items, { ...Product }];
-  
+
       localStorage.setItem("items", JSON.stringify(items));
-  
+
       console.log(items);
     } else {
-      console.log(`Product with ID ${Product.id} already exists in localStorage.`);
+      console.log(
+        `Product with ID ${Product.id} already exists in localStorage.`
+      );
     }
-  
+
     localStorage.setItem("single", JSON.stringify(Product.id));
   };
-
-  
 
   function handleTrend(e) {
     console.log(e);
@@ -155,17 +145,9 @@ function Home() {
     navigate("/single");
   }
 
-  const [green, setGreen] = useState([])
-
-  function handleEye() {
-    if(localStorage.getItem('items')) {
-      setGreen(JSON.parse(localStorage.getItem('items')))
-    }
-  }
-  console.log(green);
-  useEffect(() => {
-    handleEye()
-  }, [])
+  const filteredCars = cars.filter((car) =>
+    car.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="home">
@@ -242,7 +224,12 @@ function Home() {
       </div>
       <div className="home-body">
         <h2>Cryptocurrency Prices by Market Cap</h2>
-        <input type="text" placeholder="Search For a Crypto Currency.." />
+        <input
+          type="text"
+          placeholder="Search For a Crypto Currency.."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
         <table cellSpacing={0}>
           <tr className="head">
             <th id="th-head">Coin</th>
@@ -250,66 +237,75 @@ function Home() {
             <th className="th-head">24h Change</th>
             <th className="th-head">Market Cap</th>
           </tr>
-          {cars.map((car) => (
-            <tr key={car.id} className="body" onClick={() => handleSingle(car)}>
-              <td id="td-body">
-                <div className="image-td">
-                  <img src={car.image} alt="" />
-                  <div className="td-name">
-                    <h3> {car.symbol} </h3>
-                    <span> {car.name} </span>
-                  </div>
-                </div>
-              </td>
-              <td className="td-body">
-                <p>
-                  {" "}
-                  {symbol} {car.current_price.toLocaleString()}{" "}
-                </p>
-              </td>
-              <td className="td-body">
-                <span>
-                  {
-                    car.id === green.id ? setIsWatched(true) : setIsWatched(false)
-                  }
-                  {renderEyeIcon(isWatched)}{" "}
-                  {car.price_change_percentage_24h.toFixed(2) < 0 ? (
-                    <span style={{ color: "red" }}>
-                      {car.price_change_percentage_24h.toFixed(2)}%
+          {loading ? (
+            <SkewLoader className="loader-home" color="#87CEEB" />
+          ) : error ? (
+            <div className="error-home">{error}</div>
+          ) : (
+            <>
+              {filteredCars.map((car) => (
+                <tr
+                  key={car.id}
+                  className="body"
+                  onClick={() => handleSingle(car)}
+                >
+                  <td id="td-body">
+                    <div className="image-td">
+                      <img src={car.image} alt="" />
+                      <div className="td-name">
+                        <h3> {car.symbol} </h3>
+                        <span> {car.name} </span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="td-body">
+                    <p>
+                      {" "}
+                      {symbol} {car.current_price.toLocaleString()}{" "}
+                    </p>
+                  </td>
+                  <td className="td-body">
+                    <span>
+                      {renderEyeIcon(isWatched, car.id)}{" "}
+                      {car.price_change_percentage_24h.toFixed(2) < 0 ? (
+                        <span style={{ color: "red" }}>
+                          {car.price_change_percentage_24h.toFixed(2)}%
+                        </span>
+                      ) : (
+                        <span style={{ color: "green" }}>
+                          {car.price_change_percentage_24h.toFixed(2)}%
+                        </span>
+                      )}
                     </span>
-                  ) : (
-                    <span style={{ color: "green" }}>
-                      {car.price_change_percentage_24h.toFixed(2)}%
-                    </span>
-                  )}
-                </span>
-              </td>
-              <td className="td-body">
-                <p>
-                  {symbol} {car.market_cap.toLocaleString()}M
-                </p>
-              </td>
-            </tr>
-          ))}
+                  </td>
+                  <td className="td-body">
+                    <p>
+                      {symbol} {car.market_cap.toLocaleString()}M
+                    </p>
+                  </td>
+                </tr>
+              ))}
+            </>
+          )}
         </table>
       </div>
       <div className="home-foot">
         <Stack spacing={2}>
-        <Pagination
-        count={10}  onChange={handleChange}
-        sx={{
-          "& .MuiPaginationItem-root": {
-            "&.Mui-selected": {
-              backgroundColor: "rgba(255, 255, 255, 0.16)",
-              color: "rgb(135, 206, 235)",
-            },
-          },
-          "& button": {
-            color: "rgb(135, 206, 235)",
-          }
-          }}
-        />
-        
+          <Pagination
+            count={10}
+            onChange={handleChange}
+            sx={{
+              "& .MuiPaginationItem-root": {
+                "&.Mui-selected": {
+                  backgroundColor: "rgba(255, 255, 255, 0.16)",
+                  color: "rgb(135, 206, 235)",
+                },
+              },
+              "& button": {
+                color: "rgb(135, 206, 235)",
+              },
+            }}
+          />
         </Stack>
       </div>
     </div>
